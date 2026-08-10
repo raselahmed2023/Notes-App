@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes App</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-base-200 min-h-screen p-5">
+
+  <main class="max-w-3xl mx-auto">
+
+    <h1 class="text-4xl font-bold text-center mb-6">📝 Notes App</h1>
+
+    <div class="card bg-base-100 shadow-xl p-6 mb-6">
+      <form id="form">
+
+        <input
+          id="title"
+          class="input input-bordered w-full"
+          placeholder="Note title"
+        >
+        <p id="titleError" class="text-error text-sm mb-3"></p>
+
+        <textarea
+          id="content"
+          class="textarea textarea-bordered w-full"
+          placeholder="Write your note..."
+        ></textarea>
+        <p id="contentError" class="text-error text-sm mb-3"></p>
+
+        <button class="btn btn-primary w-full">
+          Save Note
+        </button>
+
+      </form>
+    </div>
+
+    <input
+      id="search"
+      class="input input-bordered w-full mb-6"
+      placeholder="🔍 Search notes..."
+    >
+
+    <div id="notes" class="grid md:grid-cols-2 gap-4"></div>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,54 +1,505 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notes App</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Mono:wght@500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #dfe6d3;
+    --dot: rgba(34,48,63,0.10);
+    --card: #fbf9f3;
+    --card-border: rgba(34,48,63,0.10);
+    --ink: #22303f;
+    --ink-soft: #5b6b73;
+    --amber: #c98a2c;
+    --brick: #b94a3b;
+    --shadow: rgba(34,48,63,0.18);
+  }
 
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  *{ box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    padding: 2.5rem 1.25rem 5rem;
+  }
+
+  .page{ max-width: 780px; margin: 0 auto; }
+
+  /* ---------- Header ---------- */
+  .header{ text-align: center; margin-bottom: 2.25rem; }
+  .brand{ display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .brand-mark{ font-size: 1.6rem; transform: rotate(-12deg); display: inline-block; }
+  .header h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 2.6rem;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .tagline{
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin: 0.25rem 0 0;
+    font-size: 1.05rem;
+  }
+
+  /* ---------- Shared "card" shell with a folder tab ---------- */
+  .card-shell{
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    box-shadow: 0 6px 16px var(--shadow);
+    padding: 1.5rem 1.5rem 1.25rem;
+  }
+  .tab{
+    position: absolute;
+    top: -10px;
+    left: 22px;
+    width: 44px;
+    height: 14px;
+    background: var(--tab-color, var(--ink));
+    border-radius: 6px 6px 0 0;
+  }
+
+  /* ---------- Composer (new / edit note) ---------- */
+  .composer{ margin-bottom: 2rem; }
+
+  .field{
+    display: block;
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid var(--card-border);
+    background: transparent;
+    color: var(--ink);
+    font-family: inherit;
+    padding: 0.5rem 0.1rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .field:focus{ border-bottom-color: var(--ink); }
+  .field::placeholder{ color: var(--ink-soft); opacity: 0.7; }
+
+  .field-title{
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+  }
+  .field-content{
+    font-size: 0.98rem;
+    resize: vertical;
+    min-height: 4.5rem;
+    margin-top: 0.9rem;
+  }
+
+  .error{
+    color: var(--brick);
+    font-size: 0.82rem;
+    min-height: 1.1rem;
+    margin: 0.3rem 0 0;
+  }
+
+  .composer-actions{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .editing-badge{
+    margin-right: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+
+  .btn{
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.92rem;
+    border: none;
+    border-radius: 7px;
+    padding: 0.65rem 1.3rem;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn-primary{ background: var(--ink); color: var(--card); }
+  .btn-primary:hover{ opacity: 0.9; }
+  .btn-ghost{ background: transparent; color: var(--ink-soft); }
+  .btn-ghost:hover{ color: var(--ink); }
+
+  .hidden{ display: none !important; }
+
+  /* ---------- Search ---------- */
+  .search-row{
+    position: relative;
+    margin-bottom: 1.75rem;
+  }
+  .search-icon{
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-soft);
+  }
+  .search-input{
+    width: 100%;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    border-radius: 999px;
+    padding: 0.7rem 1rem 0.7rem 2.4rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink);
+    outline: none;
+    box-shadow: 0 2px 6px var(--shadow);
+  }
+  .search-input:focus{ border-color: var(--ink); }
+
+  /* ---------- Notes grid ---------- */
+  .status{ text-align: center; }
+  .loading, .empty{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    padding: 2.5rem 1rem;
+    border: 1.5px dashed var(--card-border);
+    border-radius: 10px;
+  }
+
+  .notes-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem 1.25rem;
+  }
+
+  .note-card{
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px var(--shadow);
+    padding: 1.25rem 1.25rem 1rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .notes-grid .note-card:nth-child(3n){ transform: rotate(-0.6deg); }
+  .notes-grid .note-card:nth-child(3n+1){ transform: rotate(0.5deg); }
+  .notes-grid .note-card:nth-child(3n+2){ transform: rotate(-0.3deg); }
+  .note-card:hover{
+    transform: rotate(0deg) translateY(-3px);
+    box-shadow: 0 10px 22px var(--shadow);
+  }
+
+  .note-title{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin: 0.35rem 0 0.5rem;
+    word-break: break-word;
+  }
+  .note-content{
+    font-size: 0.92rem;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0 0 1rem;
+    line-height: 1.45;
+  }
+
+  .note-footer{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border-top: 1px dashed var(--card-border);
+    padding-top: 0.6rem;
+  }
+  .note-date{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+  }
+  .note-actions{ display: flex; gap: 0.35rem; }
+  .icon-btn{
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: var(--ink-soft);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .icon-btn:hover{ background: rgba(34,48,63,0.08); color: var(--amber); }
+  .icon-btn-danger:hover{ color: var(--brick); }
+
+  /* ---------- Accessibility ---------- */
+  *:focus-visible{
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+    .notes-grid .note-card{ transform: none !important; }
+    .note-card:hover{ transform: none !important; }
+  }
+
+  @media (max-width: 480px){
+    .header h1{ font-size: 2.1rem; }
+    .card-shell{ padding: 1.1rem 1.1rem 1rem; }
+  }
+</style>
 </head>
+<body>
 
-<body class="bg-base-200 min-h-screen p-5">
+  <div class="page">
 
-  <main class="max-w-3xl mx-auto">
+    <header class="header">
+      <div class="brand">
+        <span class="brand-mark">✎</span>
+        <h1>Notes</h1>
+      </div>
+      <p class="tagline">Jot it down, find it fast.</p>
+    </header>
 
-    <h1 class="text-4xl font-bold text-center mb-6">📝 Notes App</h1>
-
-    <div class="card bg-base-100 shadow-xl p-6 mb-6">
+    <!-- New / edit note form -->
+    <section class="composer card-shell">
+      <div class="tab" id="composerTab"></div>
       <form id="form">
+        <input id="title" class="field field-title" placeholder="Title" autocomplete="off" />
+        <p class="error" id="titleError"></p>
 
-        <input
-          id="title"
-          class="input input-bordered w-full"
-          placeholder="Note title"
-        >
-        <p id="titleError" class="text-error text-sm mb-3"></p>
+        <textarea id="content" class="field field-content" placeholder="Write your note…"></textarea>
+        <p class="error" id="contentError"></p>
 
-        <textarea
-          id="content"
-          class="textarea textarea-bordered w-full"
-          placeholder="Write your note..."
-        ></textarea>
-        <p id="contentError" class="text-error text-sm mb-3"></p>
-
-        <button class="btn btn-primary w-full">
-          Save Note
-        </button>
-
+        <div class="composer-actions">
+          <span id="editingBadge" class="editing-badge hidden">Editing note</span>
+          <button type="button" id="cancelEdit" class="btn btn-ghost hidden">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Save note</button>
+        </div>
       </form>
+    </section>
+
+    <!-- Search -->
+    <div class="search-row">
+      <span class="search-icon">⌕</span>
+      <input id="search" class="search-input" placeholder="Search notes…" />
     </div>
 
-    <input
-      id="search"
-      class="input input-bordered w-full mb-6"
-      placeholder="🔍 Search notes..."
-    >
+    <!-- Loading / empty state -->
+    <section id="status" class="status"></section>
 
-    <div id="notes" class="grid md:grid-cols-2 gap-4"></div>
+    <!-- Notes -->
+    <section id="notes" class="notes-grid"></section>
 
-  </main>
+  </div>
 
-  <script src="script.js"></script>
+<script>
+  // -----------------------------------------------------------
+  // Notes App — plain JavaScript, explained step by step.
+  //
+  // Notes are kept in one array (`notes`) in memory, and every
+  // time that array changes we save the whole thing to
+  // persistent storage so it's still there next time you open
+  // this page.
+  // -----------------------------------------------------------
+
+  const $ = (id) => document.getElementById(id);
+
+  const STORAGE_KEY = "notes-app:notes"; // where the notes list lives in storage
+  const TAB_COLORS = ["#7c9473", "#6e8fa3", "#c98a2c", "#7b5875", "#4f8a82", "#b4623f"];
+
+  let notes = [];        // all notes currently loaded
+  let editingId = null;  // id of the note being edited, or null if adding a new one
+
+  // 1. Load notes from storage (runs once, when the page opens)
+  async function loadNotes() {
+    try {
+      const result = await window.storage.get(STORAGE_KEY, false);
+      notes = result ? JSON.parse(result.value) : [];
+    } catch (err) {
+      // Nothing saved yet — that's fine, start with an empty list.
+      notes = [];
+    }
+  }
+
+  // 2. Save the current notes array to storage
+  async function persistNotes() {
+    try {
+      await window.storage.set(STORAGE_KEY, JSON.stringify(notes), false);
+    } catch (err) {
+      console.error("Couldn't save notes:", err);
+    }
+  }
+
+  // 3. Small helpers
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML; // browser escapes it for us
+  }
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }
+
+  function tabColorFor(id) {
+    return TAB_COLORS[id % TAB_COLORS.length];
+  }
+
+  // 4. Render a list of notes to the page
+  function render(list = notes) {
+    const container = $("notes");
+    const status = $("status");
+
+    if (list.length === 0) {
+      container.innerHTML = "";
+      status.innerHTML = `<div class="empty">${
+        notes.length === 0
+          ? "No notes yet — write your first one above."
+          : "No notes match your search."
+      }</div>`;
+      return;
+    }
+
+    status.innerHTML = "";
+    container.innerHTML = list
+      .map(
+        (note) => `
+        <article class="note-card">
+          <div class="tab" style="--tab-color:${tabColorFor(note.id)}"></div>
+          <h2 class="note-title">${escapeHtml(note.title)}</h2>
+          <p class="note-content">${escapeHtml(note.content)}</p>
+          <div class="note-footer">
+            <span class="note-date">Edited ${formatDate(note.updatedAt)}</span>
+            <div class="note-actions">
+              <button class="icon-btn" title="Edit" onclick="editNote(${note.id})">✎</button>
+              <button class="icon-btn icon-btn-danger" title="Delete" onclick="deleteNote(${note.id})">🗑</button>
+            </div>
+          </div>
+        </article>`
+      )
+      .join("");
+  }
+
+  // 5. Add or update a note when the form is submitted
+  $("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const title = $("title").value.trim();
+    const content = $("content").value.trim();
+
+    $("titleError").textContent = title ? "" : "Please add a title.";
+    $("contentError").textContent = content ? "" : "Please write something.";
+    if (!title || !content) return;
+
+    if (editingId) {
+      // Updating an existing note
+      const note = notes.find((n) => n.id === editingId);
+      note.title = title;
+      note.content = content;
+      note.updatedAt = new Date().toISOString();
+      stopEditing();
+    } else {
+      // Adding a brand new note
+      notes.unshift({
+        id: Date.now(),
+        title,
+        content,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    await persistNotes();
+    e.target.reset();
+    render();
+  });
+
+  // 6. Put a note into the form so it can be edited
+  function editNote(id) {
+    const note = notes.find((n) => n.id === id);
+    if (!note) return;
+
+    $("title").value = note.title;
+    $("content").value = note.content;
+    editingId = id;
+
+    $("editingBadge").classList.remove("hidden");
+    $("cancelEdit").classList.remove("hidden");
+    $("saveBtn").textContent = "Update note";
+    $("composerTab").style.setProperty("--tab-color", tabColorFor(id));
+
+    $("title").focus();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // 7. Leave edit mode without saving
+  function stopEditing() {
+    editingId = null;
+    $("editingBadge").classList.add("hidden");
+    $("cancelEdit").classList.add("hidden");
+    $("saveBtn").textContent = "Save note";
+    $("composerTab").style.removeProperty("--tab-color");
+  }
+
+  $("cancelEdit").addEventListener("click", () => {
+    stopEditing();
+    $("form").reset();
+    $("titleError").textContent = "";
+    $("contentError").textContent = "";
+  });
+
+  // 8. Delete a note
+  async function deleteNote(id) {
+    notes = notes.filter((n) => n.id !== id);
+    await persistNotes();
+    if (editingId === id) {
+      stopEditing();
+      $("form").reset();
+    }
+    render();
+  }
+
+  // 9. Search as you type
+  $("search").addEventListener("input", (e) => {
+    const text = e.target.value.toLowerCase();
+    const filtered = notes.filter(
+      (n) =>
+        n.title.toLowerCase().includes(text) ||
+        n.content.toLowerCase().includes(text)
+    );
+    render(filtered);
+  });
+
+  // 10. Start the app
+  async function init() {
+    $("status").innerHTML = `<div class="loading">Loading your notes…</div>`;
+    await loadNotes();
+    render();
+  }
+  init();
+</script>
+
 </body>
 </html>
